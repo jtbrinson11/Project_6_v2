@@ -1,16 +1,15 @@
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Scanner;
+
+import javax.swing.*;
+import javax.swing.border.Border;
+import java.awt.*;
 
 public class Project_6_v2{
 
-    static Scanner scan = new Scanner(System.in);
-    static Scanner scan1 = new Scanner(System.in);
-    static Scanner scan2 = new Scanner(System.in);
-
     public static String[][] game = new String[10][10];
 
-    static Human human = new Human(5, 9);
+    static Human human = new Human();
 
     static HashMap<Integer, Goblin> goblins = new HashMap<>();
 
@@ -23,6 +22,40 @@ public class Project_6_v2{
     static Goblin goblin4 = new Goblin(6,0);
 
     static Goblin goblin5 = new Goblin(8,0);
+
+    static String helpStr = "This game is a turn based game where the Humans are trying to kill the Goblins,\n" +
+            "and vice versa. The Humans are represented by the letter H, the Goblins by letter G,\n" +
+            "and random treasure by the letter T. Keep an eye out for the treasure! \n" +
+            "\nYou control the" + " Human. The Goblins will automatically pursue and attempt to kill the Human when it's their turn, or choose to stay still.\n" +
+            "A prompt will display when it's your turn to move, and ask what you want to do. From there,\n" +
+            "you can move or access an inventory of items your character has. Movement is in\n" +
+            "a north/south/east/west direction. To move, simply type the first letter of the direction\n" +
+            "you want to move. Your inventory will contain all your items and weapons on hand.\n" +
+            "You can use the Healing Mushroom whenever you wish, but the other items are restricted for\n" +
+            "use in combat. \n" + "\nCombat in this game is automatically initiated when the Human and a Goblin\n" +
+            "collide. Each one gets a chance to do damage on each other. The Goblins will do their own attack,\n" +
+            "but you get to choose what to do in combat. The game will prompt you for what you want to do.\n" +
+            "You can either directly attack with one of your weapons, use a Healing Mushroom, Bomb, or Potion.\n" +
+            "Directly attacking will use one of your conventional weapons to strike a blow. However, a weapon\n" +
+            "in your inventory only increases the maximum potential damage your attack could do. The Bomb acts\n" +
+            "the same, except it has the greatest chance of killing a Goblin in a single turn. But, you can only\n" +
+            "use a Bomb if it is in your inventory. Don't worry, Goblins will drop their Bombs if they are killed,\n" +
+            "and have any in their inventory. Healing Mushrooms are used to add 25 health points, or top off your\n" +
+            "health to 100. You can also only use them if one is in your inventory. Finally, the Potion is used to\n" +
+            "take 25 health points of the Goblin's health and add to the Human's health. It can even be used to \n" +
+            "increase the Human's maximum hit points. This item can also only be used if it is in the inventory.\n" +
+            "Be careful with your special items, because only one of each item can be stored at a time! You can\n" +
+            "relax knowing that Goblins cannot carry Healing Mushrooms or Potions, and they are limited to using\n" +
+            "a sword, and have one bomb each. \n" + "\nThe game is won by killing all the Goblins, and the game is lost\n" +
+            "when the Human is killed. Good luck, and thanks for playing the game!\n";
+
+    static JPanel gameBoard;
+
+    static JLabel[][] labels = new JLabel[10][10];
+
+    static JLabel[] playerStats = new JLabel[4];
+
+    static Border blue = BorderFactory.createLineBorder(Color.BLUE, 5), red = BorderFactory.createLineBorder(Color.RED, 5), orange = BorderFactory.createLineBorder(Color.ORANGE, 5), green = BorderFactory.createLineBorder(Color.GREEN, 5);
 
     public static void initialSetup()
     {
@@ -47,211 +80,195 @@ public class Project_6_v2{
         game[goblin4.getPosY()][goblin4.getPosX()] = goblin4.toString();
         game[goblin5.getPosY()][goblin5.getPosX()] = goblin5.toString();
 
-        game[human.getPosY()][human.getPosX()] = human.toString();
-    }
+        game[Human.getPosY()][Human.getPosX()] = human.toString();
 
-    public static void playerStats()
-    {
-        int tempX = human.getPosX() + 1, tempY = human.getPosY() + 1;
-        System.out.print("Position: (" + tempX + "," + tempY + ")   Health: (" + human.getHealth() + ")   Power: (" + human.getPower() + ")\n");
+        //main frame
+        JFrame gameFrame = new JFrame("Humans vs. Goblins");
+        gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        gameFrame.setSize(600, 600);
+
+        //main board
+        gameBoard = new JPanel();
+        gameBoard.setLayout(new GridLayout(10, 10));
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                JLabel label = new JLabel();
+                labels[i][j] = label;
+                String labelType = game[i][j];
+                switch (labelType){
+                    case "H":
+                        label.setBorder(blue);
+                        break;
+                    case "G":
+                        label.setBorder(red);
+                        break;
+                    case "T":
+                        label.setBorder(orange);
+                        break;
+                    case "L":
+                        label.setBorder(green);
+                        break;
+                }
+                labels[i][j].setText(game[i][j]);
+                gameBoard.add(label);
+            }
+        }
+        gameBoard.setSize(600, 500);
+
+        //player panel
+        JPanel playerPanel = new JPanel();
+        playerPanel.setLayout(new BoxLayout(playerPanel, BoxLayout.PAGE_AXIS));
+        playerPanel.setSize(600, 100);
+        JPanel playerInfo = new JPanel();
+        JPanel playerInventory = new JPanel();
+        playerInfo.setLayout(new GridLayout(1, 6, 10, 0));
+        playerInventory.setLayout(new FlowLayout());
+
+        JLabel position = new JLabel("Position: ");
+        JLabel positionNum = new JLabel();
+        playerStats[0] = positionNum;
+        positionNum.setText((Human.getPosX() + 1) + ", " + (Human.getPosY() + 1));
+        playerInfo.add(position);
+        playerInfo.add(playerStats[0]);
+
+        JLabel health = new JLabel("Health: ");
+        JLabel healthNum = new JLabel();
+        playerStats[1] = healthNum;
+        healthNum.setText(String.valueOf(Human.getHealth()));
+        playerInfo.add(health);
+        playerInfo.add(playerStats[1]);
+
+        JLabel power = new JLabel("Power: ");
+        JLabel powerNum = new JLabel();
+        playerStats[2] = powerNum;
+        powerNum.setText(String.valueOf(Human.getPower()));
+        playerInfo.add(power);
+        playerInfo.add(playerStats[2]);
+
+        JLabel inventory = new JLabel("Inventory: ");
+        JLabel weapons = new JLabel();
+        playerStats[3] = weapons;
+        StringBuilder temp = new StringBuilder();
+        for (int wep : Human.inventory.keySet())
+        {
+            temp.append(Human.inventory.get(wep).getWeapon()).append("     ");
+        }
+        weapons.setText(temp.toString());
+        playerInventory.add(inventory);
+        playerInventory.add(weapons);
+
+        playerPanel.add(playerInfo);
+        playerPanel.add(playerInventory);
+
+        gameFrame.getContentPane().add(BorderLayout.CENTER, gameBoard);
+        gameFrame.getContentPane().add(BorderLayout.SOUTH, playerPanel);
+        gameFrame.setVisible(true);
     }
 
     public static void playerMove()
     {
-        int x = human.getPosX(), y = human.getPosY();
+        int x = Human.getPosX(), y = Human.getPosY();
         boolean done = false;
         while (!done) {
-            System.out.println("\nWhich way do you want to move (n/s/e/w): ");
-            String move = scan1.nextLine();
-            switch (move) {
-                case "N":
-                    if (human.getPosY() != 0)
+            String[] options = {"North", "South", "East", "West"};
+            int choice = JOptionPane.showOptionDialog(new JFrame(), "What do you want to do?", "Your turn",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+
+            switch (choice) {
+                case 0:
+                    if (Human.getPosY() != 0)
                     {
-                        if (!game[human.getPosY() - 1][human.getPosX()].equals("G"))
+                        if (!game[Human.getPosY() - 1][Human.getPosX()].equals("G"))
                         {
-                            human.setPosY(human.getPosY() - 1);
+                            Human.setPosY(Human.getPosY() - 1);
                             done = true;
                         }
                         else
                         {
-                            System.out.println("A Goblin is in the way! PLease try again!");
+                            JOptionPane.showMessageDialog(new JFrame(), "A Goblin is in the way!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                         }
                     }
                     else
                     {
-                        System.out.println("That's out of bounds. Please try again!");
+                        JOptionPane.showMessageDialog(new JFrame(), "Out of bounds!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                     }
                     break;
-                case "n":
-                    if (human.getPosY() != 0)
+                case 1:
+                    if (Human.getPosY() != 9)
                     {
-                        if (!game[human.getPosY() - 1][human.getPosX()].equals("G"))
+                        if (!game[Human.getPosY() + 1][Human.getPosX()].equals("G"))
                         {
-                            human.setPosY(human.getPosY() - 1);
+                            Human.setPosY(Human.getPosY() + 1);
                             done = true;
                         }
                         else
                         {
-                            System.out.println("A Goblin is blocking the way! PLease try again!");
+                            JOptionPane.showMessageDialog(new JFrame(), "A Goblin is in the way!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                         }
                     }
                     else
                     {
-                        System.out.println("Sorry, that's too far north. Please try again!");
+                        JOptionPane.showMessageDialog(new JFrame(), "Out of bounds!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                     }
                     break;
-                case "S":
-                    if (human.getPosY() != 9)
+                case 2:
+                    if (Human.getPosX() != 9)
                     {
-                        if (!game[human.getPosY() + 1][human.getPosX()].equals("G"))
+                        if (!game[Human.getPosY()][Human.getPosX() + 1].equals("G"))
                         {
-                            human.setPosY(human.getPosY() + 1);
+                            Human.setPosX(Human.getPosX() + 1);
                             done = true;
                         }
                         else
                         {
-                            System.out.println("A Goblin is in the way! Please try again!");
+                            JOptionPane.showMessageDialog(new JFrame(), "A Goblin is in the way!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                         }
                     }
                     else
                     {
-                        System.out.println("Sorry, that's out of bounds. Please try again!");
+                        JOptionPane.showMessageDialog(new JFrame(), "Out of bounds!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                     }
                     break;
-                case "s":
-                    if (human.getPosY() != 9)
+                case 3:
+                    if (Human.getPosX() != 0)
                     {
-                        if (!game[human.getPosY() + 1][human.getPosX()].equals("G"))
+                        if (!game[Human.getPosY()][Human.getPosX() - 1].equals("G"))
                         {
-                            human.setPosY(human.getPosY() + 1);
+                            Human.setPosX(Human.getPosX() - 1);
                             done = true;
                         }
                         else
                         {
-                            System.out.println("A Goblin is blocking your path! Please try again!");
+                            JOptionPane.showMessageDialog(new JFrame(), "A Goblin is in the way!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                         }
                     }
                     else
                     {
-                        System.out.println("That's out of bounds. Please try again!");
+                        JOptionPane.showMessageDialog(new JFrame(), "Out of bounds!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                     }
-                    break;
-                case "E":
-                    if (human.getPosX() != 9)
-                    {
-                        if (!game[human.getPosY()][human.getPosX() + 1].equals("G"))
-                        {
-                            human.setPosX(human.getPosX() + 1);
-                            done = true;
-                        }
-                        else
-                        {
-                            System.out.println("There's a Goblin in the way! Please try again!");
-                        }
-                    }
-                    else
-                    {
-                        System.out.println("Sorry, that's out of bounds. Please try again!");
-                    }
-                    break;
-                case "e":
-                    if (human.getPosX() != 9)
-                    {
-                        if (!game[human.getPosY()][human.getPosX() + 1].equals("G"))
-                        {
-                            human.setPosX(human.getPosX() + 1);
-                            done = true;
-                        }
-                        else
-                        {
-                            System.out.println("There's a Goblin in the way! Please try again!");
-                        }
-                    }
-                    else
-                    {
-                        System.out.println("That's too far east. Please try again!");
-                    }
-                    break;
-                case "W":
-                    if (human.getPosX() != 0)
-                    {
-                        if (!game[human.getPosY()][human.getPosX() - 1].equals("G"))
-                        {
-                            human.setPosX(human.getPosX() - 1);
-                            done = true;
-                        }
-                        else
-                        {
-                            System.out.println("The Goblin is in the way! Please try again!");
-                        }
-                    }
-                    else
-                    {
-                        System.out.println("Sorry, that's out of bounds. Please try again!");
-                    }
-                    break;
-                case "w":
-                    if (human.getPosX() != 0)
-                    {
-                        if (!game[human.getPosY()][human.getPosX() - 1].equals("G"))
-                        {
-                            human.setPosX(human.getPosX() - 1);
-                            done = true;
-                        }
-                        else
-                        {
-                            System.out.println("A Goblin is in the way! Please try again!");
-                        }
-                    }
-                    else
-                    {
-                        System.out.println("That's too far west. Please try again!");
-                    }
-                    break;
-                default:
-                    System.out.println("Sorry, invalid input! Try again!");
                     break;
             }
         }
-        game[human.getPosY()][human.getPosX()] = human.toString();
+        game[Human.getPosY()][Human.getPosX()] = human.toString();
         game[y][x] = "L";
-        try
-        {
-            printBoard();
-            Thread.sleep(5000);
-        }
-        catch (InterruptedException e)
-        {
-            System.out.println("\nError in program . . .");
-            System.exit(-1);
-        }
+        printBoard();
     }
 
     public static void playerTurn()
     {
-        System.out.println("\nIt's your turn. Here are the possible actions: ");
-        System.out.println("\n1. Attack");
-        System.out.println("2. Heal");
-        System.out.println("3. Move");
-        System.out.println("4. Help");
-
         boolean done = false;
         while(!done) {
-            System.out.println("\n\nWhat do you want to do: ");
-            String input = scan.nextLine();
-            int choice = 0;
-            try
-            {
-                choice = Integer.parseInt(input);
-            } catch (Exception e)
-            {
-                System.out.println("Input was not a number!");
-            }
+
+            String[] options = {"Attack", "Heal", "Move", "Help", "Exit"};
+            int choice = JOptionPane.showOptionDialog(new JFrame(), "What do you want to do?", "Your turn",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 
             switch (choice) {
-                case 1:
-                    int tempX = human.getPosX(), tempY = human.getPosY();
-                    if (human.isInCorner())
+                case 0:
+                    int tempX = Human.getPosX(), tempY = Human.getPosY();
+                    if (Human.isInCorner())
                     {
                         if (tempY == 9 && tempX == 9)
                         {
@@ -269,7 +286,7 @@ public class Project_6_v2{
                             }
                             else
                             {
-                                System.out.println("You're out of range to attack! PLease try again!");
+                                JOptionPane.showMessageDialog(new JFrame(), "You're out of range to attack!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                             }
                             break;
                         }
@@ -289,7 +306,7 @@ public class Project_6_v2{
                             }
                             else
                             {
-                                System.out.println("You're out of range to attack! PLease try again!");
+                                JOptionPane.showMessageDialog(new JFrame(), "You're out of range to attack!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                             }
                             break;
                         }
@@ -309,7 +326,7 @@ public class Project_6_v2{
                             }
                             else
                             {
-                                System.out.println("You're out of range to attack! PLease try again!");
+                                JOptionPane.showMessageDialog(new JFrame(), "You're out of range to attack!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                             }
                             break;
                         }
@@ -329,14 +346,14 @@ public class Project_6_v2{
                             }
                             else
                             {
-                                System.out.println("You're out of range to attack! PLease try again!");
+                                JOptionPane.showMessageDialog(new JFrame(), "You're out of range to attack!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                             }
                             break;
                         }
                     }
-                    else if (human.isOnEdge())
+                    else if (Human.isOnEdge())
                     {
-                        if (human.getPosY() == 9)
+                        if (Human.getPosY() == 9)
                         {
                             if (game[tempY - 1][tempX].equals("G"))
                             {
@@ -358,11 +375,11 @@ public class Project_6_v2{
                             }
                             else
                             {
-                                System.out.println("You're out of range to attack! PLease try again!");
+                                JOptionPane.showMessageDialog(new JFrame(), "You're out of range to attack!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                                 break;
                             }
                         }
-                        else if (human.getPosY() == 0)
+                        else if (Human.getPosY() == 0)
                         {
                             if (game[tempY + 1][tempX].equals("G"))
                             {
@@ -384,11 +401,11 @@ public class Project_6_v2{
                             }
                             else
                             {
-                                System.out.println("You're out of range to attack! PLease try again!");
+                                JOptionPane.showMessageDialog(new JFrame(), "You're out of range to attack!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                                 break;
                             }
                         }
-                        else if (human.getPosX() == 9)
+                        else if (Human.getPosX() == 9)
                         {
                             if (game[tempY][tempX - 1].equals("G"))
                             {
@@ -410,11 +427,11 @@ public class Project_6_v2{
                             }
                             else
                             {
-                                System.out.println("You're out of range to attack! PLease try again!");
+                                JOptionPane.showMessageDialog(new JFrame(), "You're out of range to attack!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                                 break;
                             }
                         }
-                        else if (human.getPosX() == 0)
+                        else if (Human.getPosX() == 0)
                         {
                             if (game[tempY][tempX + 1].equals("G"))
                             {
@@ -436,7 +453,7 @@ public class Project_6_v2{
                             }
                             else
                             {
-                                System.out.println("You're out of range to attack! PLease try again!");
+                                JOptionPane.showMessageDialog(new JFrame(), "You're out of range to attack!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                                 break;
                             }
                         }
@@ -469,24 +486,24 @@ public class Project_6_v2{
                         }
                         else
                         {
-                            System.out.println("You're out of range to attack! PLease try again!");
+                            JOptionPane.showMessageDialog(new JFrame(), "You're out of range to attack!", "Invalid move", JOptionPane.WARNING_MESSAGE);
                         }
                         break;
                     }
-                case 2:
-                    int temp = human.getHealth();
-                    human.heal();
-                    if (human.getHealth() > temp)
+                case 1:
+                    int temp = Human.getHealth();
+                    Human.heal();
+                    if (Human.getHealth() > temp)
                     {
                         done = true;
                     }
                     break;
-                case 3:
+                case 2:
                     playerMove();
-                    tempX = human.getPosX();
-                    tempY = human.getPosY();
+                    tempX = Human.getPosX();
+                    tempY = Human.getPosY();
 
-                    if (human.isInCorner())
+                    if (Human.isInCorner())
                     {
                         if (tempY == 9 && tempX == 9)
                         {
@@ -502,10 +519,10 @@ public class Project_6_v2{
                                 done = true;
                                 break;
                             }
-                            else if ((game[human.getPosY() - 1][human.getPosX()].equals("T")) || (game[human.getPosY()][human.getPosX() - 1].equals("T")))
+                            else if ((game[Human.getPosY() - 1][Human.getPosX()].equals("T")) || (game[Human.getPosY()][Human.getPosX() - 1].equals("T")))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
                                 if (game[tempY - 1][tempX].equals("T"))
                                 {
@@ -515,16 +532,7 @@ public class Project_6_v2{
                                 {
                                     game[tempY][tempX - 1] = "L";
                                 }
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                printBoard();
                                 done = true;
                                 break;
                             }
@@ -547,7 +555,7 @@ public class Project_6_v2{
                             else if ((game[tempY + 1][tempX].equals("T")) || (game[tempY][tempX + 1].equals("T")))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
                                 if (game[tempY + 1][tempX].equals("T"))
                                 {
@@ -557,16 +565,7 @@ public class Project_6_v2{
                                 {
                                     game[tempY][tempX + 1] = "L";
                                 }
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                printBoard();
                                 done = true;
                                 break;
                             }
@@ -589,7 +588,7 @@ public class Project_6_v2{
                             else if ((game[tempY - 1][tempX].equals("T")) || (game[tempY][tempX + 1].equals("T")))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
                                 if (game[tempY - 1][tempX].equals("T"))
                                 {
@@ -599,16 +598,7 @@ public class Project_6_v2{
                                 {
                                     game[tempY][tempX + 1] = "L";
                                 }
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                printBoard();
                                 done = true;
                                 break;
                             }
@@ -631,7 +621,7 @@ public class Project_6_v2{
                             else if ((game[tempY + 1][tempX].equals("T")) || (game[tempY][tempX - 1].equals("T")))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
                                 if (game[tempY + 1][tempX].equals("T"))
                                 {
@@ -641,25 +631,16 @@ public class Project_6_v2{
                                 {
                                     game[tempY][tempX - 1] = "L";
                                 }
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                printBoard();
                                 done = true;
                                 break;
                             }
                             break;
                         }
                     }
-                    else if (human.isOnEdge())
+                    else if (Human.isOnEdge())
                     {
-                        if (human.getPosY() == 9)
+                        if (Human.getPosY() == 9)
                         {
                             if (game[tempY - 1][tempX].equals("G"))
                             {
@@ -682,50 +663,32 @@ public class Project_6_v2{
                             else if (game[tempY - 1][tempX].equals("T"))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
                                 game[tempY][tempX + 1] = "L";
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                printBoard();
                                 done = true;
                                 break;
                             }
                             else if ((game[tempY][tempX + 1].equals("T")) || (game[tempY][tempX - 1].equals("T")))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
                                 if (game[tempY + 1][tempX].equals("T"))
                                 {
-                                    game[human.getPosY() + 1][human.getPosX()] = "L";
+                                    game[Human.getPosY() + 1][Human.getPosX()] = "L";
                                 }
                                 else if (game[tempY - 1][tempX].equals("T"))
                                 {
                                     game[tempY - 1][tempX] = "L";
                                 }
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                printBoard();
                                 done = true;
                                 break;
                             }
                         }
-                        else if (human.getPosY() == 0)
+                        else if (Human.getPosY() == 0)
                         {
                             if (game[tempY + 1][tempX].equals("G"))
                             {
@@ -745,53 +708,35 @@ public class Project_6_v2{
                                 done = true;
                                 break;
                             }
-                            else if (game[human.getPosY() + 1][human.getPosX()].equals("T"))
+                            else if (game[Human.getPosY() + 1][Human.getPosX()].equals("T"))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
-                                game[human.getPosY()][human.getPosX() + 1] = "L";
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                game[Human.getPosY()][Human.getPosX() + 1] = "L";
+                                printBoard();
                                 done = true;
                                 break;
                             }
-                            else if ((game[human.getPosY()][human.getPosX() + 1].equals("T")) || (game[human.getPosY()][human.getPosX() - 1].equals("T")))
+                            else if ((game[Human.getPosY()][Human.getPosX() + 1].equals("T")) || (game[Human.getPosY()][Human.getPosX() - 1].equals("T")))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
-                                if (game[human.getPosY() + 1][human.getPosX()].equals("T"))
+                                if (game[Human.getPosY() + 1][Human.getPosX()].equals("T"))
                                 {
-                                    game[human.getPosY() + 1][human.getPosX()] = "L";
+                                    game[Human.getPosY() + 1][Human.getPosX()] = "L";
                                 }
-                                else if (game[human.getPosY() - 1][human.getPosX()].equals("T"))
+                                else if (game[Human.getPosY() - 1][Human.getPosX()].equals("T"))
                                 {
-                                    game[human.getPosY() - 1][human.getPosX()] = "L";
+                                    game[Human.getPosY() - 1][Human.getPosX()] = "L";
                                 }
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                printBoard();
                                 done = true;
                                 break;
                             }
                         }
-                        else if (human.getPosX() == 9)
+                        else if (Human.getPosX() == 9)
                         {
                             if (game[tempY][tempX - 1].equals("G"))
                             {
@@ -811,53 +756,35 @@ public class Project_6_v2{
                                 done = true;
                                 break;
                             }
-                            else if ((game[human.getPosY()][human.getPosX() - 1].equals("T")))
+                            else if ((game[Human.getPosY()][Human.getPosX() - 1].equals("T")))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
-                                game[human.getPosY()][human.getPosX() - 1] = "L";
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                game[Human.getPosY()][Human.getPosX() - 1] = "L";
+                                printBoard();
                                 done = true;
                                 break;
                             }
-                            else if ((game[human.getPosY() + 1][human.getPosX()].equals("T")) || (game[human.getPosY() - 1][human.getPosX()].equals("T")))
+                            else if ((game[Human.getPosY() + 1][Human.getPosX()].equals("T")) || (game[Human.getPosY() - 1][Human.getPosX()].equals("T")))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
-                                if (game[human.getPosY() + 1][human.getPosX()].equals("T"))
+                                if (game[Human.getPosY() + 1][Human.getPosX()].equals("T"))
                                 {
-                                    game[human.getPosY() + 1][human.getPosX()] = "L";
+                                    game[Human.getPosY() + 1][Human.getPosX()] = "L";
                                 }
-                                else if (game[human.getPosY() - 1][human.getPosX()].equals("T"))
+                                else if (game[Human.getPosY() - 1][Human.getPosX()].equals("T"))
                                 {
-                                    game[human.getPosY()- 1][human.getPosX()] = "L";
+                                    game[Human.getPosY()- 1][Human.getPosX()] = "L";
                                 }
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                printBoard();
                                 done = true;
                                 break;
                             }
                         }
-                        else if (human.getPosX() == 0)
+                        else if (Human.getPosX() == 0)
                         {
                             if (game[tempY][tempX + 1].equals("G"))
                             {
@@ -877,48 +804,30 @@ public class Project_6_v2{
                                 done = true;
                                 break;
                             }
-                            else if ((game[human.getPosY()][human.getPosX() + 1].equals("T")))
+                            else if ((game[Human.getPosY()][Human.getPosX() + 1].equals("T")))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
-                                game[human.getPosY()][human.getPosX() - 1] = "L";
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                game[Human.getPosY()][Human.getPosX() - 1] = "L";
+                                printBoard();
                                 done = true;
                                 break;
                             }
-                            else if ((game[human.getPosY() + 1][human.getPosX()].equals("T")) || (game[human.getPosY() - 1][human.getPosX()].equals("T")))
+                            else if ((game[Human.getPosY() + 1][Human.getPosX()].equals("T")) || (game[Human.getPosY() - 1][Human.getPosX()].equals("T")))
                             {
                                 int weapon = (int)((Math.random() * (5)) + 0);
-                                human.addWeapon(new Items(weapon));
+                                Human.addWeapon(new Items(weapon));
 
-                                if (game[human.getPosY() + 1][human.getPosX()].equals("T"))
+                                if (game[Human.getPosY() + 1][Human.getPosX()].equals("T"))
                                 {
-                                    game[human.getPosY() + 1][human.getPosX()] = "L";
+                                    game[Human.getPosY() + 1][Human.getPosX()] = "L";
                                 }
-                                else if (game[human.getPosY() - 1][human.getPosX()].equals("T"))
+                                else if (game[Human.getPosY() - 1][Human.getPosX()].equals("T"))
                                 {
-                                    game[human.getPosY()- 1][human.getPosX()] = "L";
+                                    game[Human.getPosY()- 1][Human.getPosX()] = "L";
                                 }
-                                try
-                                {
-                                    printBoard();
-                                    Thread.sleep(5000);
-                                }
-                                catch (InterruptedException e)
-                                {
-                                    System.out.println("\nError in program . . .");
-                                    System.exit(-1);
-                                }
+                                printBoard();
                                 done = true;
                                 break;
                             }
@@ -950,110 +859,95 @@ public class Project_6_v2{
                             done = true;
                             break;
                         }
-                        else if ((game[human.getPosY()][human.getPosX() + 1].equals("T")) || (game[human.getPosY()][human.getPosX() - 1].equals("T")))
+                        else if ((game[Human.getPosY()][Human.getPosX() + 1].equals("T")) || (game[Human.getPosY()][Human.getPosX() - 1].equals("T")))
                         {
                             int weapon = (int)((Math.random() * (5)) + 0);
-                            human.addWeapon(new Items(weapon));
+                            Human.addWeapon(new Items(weapon));
 
-                            if (game[human.getPosY()][human.getPosX() + 1].equals("T"))
+                            if (game[Human.getPosY()][Human.getPosX() + 1].equals("T"))
                             {
-                                game[human.getPosY()][human.getPosX() + 1] = "L";
+                                game[Human.getPosY()][Human.getPosX() + 1] = "L";
                             }
-                            else if (game[human.getPosY()][human.getPosX() - 1].equals("T"))
+                            else if (game[Human.getPosY()][Human.getPosX() - 1].equals("T"))
                             {
-                                game[human.getPosY()][human.getPosX() - 1] = "L";
+                                game[Human.getPosY()][Human.getPosX() - 1] = "L";
                             }
-                            try
-                            {
-                                printBoard();
-                                Thread.sleep(5000);
-                            }
-                            catch (InterruptedException e)
-                            {
-                                System.out.println("\nError in program . . .");
-                                System.exit(-1);
-                            }
+                            printBoard();
                             done = true;
                             break;
                         }
-                        else if ((game[human.getPosY() + 1][human.getPosX()].equals("T")) || (game[human.getPosY() - 1][human.getPosX()].equals("T")))
+                        else if ((game[Human.getPosY() + 1][Human.getPosX()].equals("T")) || (game[Human.getPosY() - 1][Human.getPosX()].equals("T")))
                         {
                             int weapon = (int)((Math.random() * (5)) + 0);
-                            human.addWeapon(new Items(weapon));
+                            Human.addWeapon(new Items(weapon));
 
-                            if (game[human.getPosY() + 1][human.getPosX()].equals("T"))
+                            if (game[Human.getPosY() + 1][Human.getPosX()].equals("T"))
                             {
-                                game[human.getPosY() + 1][human.getPosX()] = "L";
+                                game[Human.getPosY() + 1][Human.getPosX()] = "L";
                             }
-                            else if (game[human.getPosY() - 1][human.getPosX()].equals("T"))
+                            else if (game[Human.getPosY() - 1][Human.getPosX()].equals("T"))
                             {
-                                game[human.getPosY() - 1][human.getPosX()] = "L";
+                                game[Human.getPosY() - 1][Human.getPosX()] = "L";
                             }
-                            try
-                            {
-                                printBoard();
-                                Thread.sleep(5000);
-                            }
-                            catch (InterruptedException e)
-                            {
-                                System.out.println("\nError in program . . .");
-                                System.exit(-1);
-                            }
+                            printBoard();
                             done = true;
                             break;
                         }
                         done = true;
                         break;
                     }
+                case 3:
+                    JOptionPane.showMessageDialog(new JFrame(), helpStr);
+                    break;
                 case 4:
-                    help();
-                default:
-                    System.out.println("Invalid input! Please try again!");
+                    System.exit(-1);
             }
         }
     }
 
     public static void goblinTurn()
     {
+        JOptionPane.showMessageDialog(new JFrame(), "Goblin's turn!");
+
         ArrayList<Integer> gobRemove = new ArrayList<>();
         boolean humanAttack = false;
         for (Goblin gob : goblins.values())
         {
             int x = gob.getPosX(), y = gob.getPosY();
 
-            if ((x == human.getPosX()) && ((y == human.getPosY() - 1) || (y == human.getPosY() + 1)))
+            if ((x == Human.getPosX()) && ((y == Human.getPosY() - 1) || (y == Human.getPosY() + 1)))
             {
-                gob.attack(human);
-                if (human.getHealth() <= 0)
+                gob.attack();
+                if (Human.getHealth() <= 0)
                 {
                     break;
                 }
                 else if (!humanAttack)
                 {
-                    human.attack(gob);
+                    Human.attack(gob);
                     generateTreasure();
                     humanAttack = true;
                 }
             }
-            else if ((y == human.getPosY()) && ((x == human.getPosX() - 1) || (x == human.getPosX() + 1)))
+            else if ((y == Human.getPosY()) && ((x == Human.getPosX() - 1) || (x == Human.getPosX() + 1)))
             {
-                gob.attack(human);
-                if (human.getHealth() <= 0)
+                gob.attack();
+                if (Human.getHealth() <= 0)
                 {
                     break;
                 }
                 else if (!humanAttack)
                 {
-                    human.attack(gob);
+                    Human.attack(gob);
                     generateTreasure();
                     humanAttack = true;
                 }
             }
             else
             {
-                if (y == human.getPosY())
+                if (y == Human.getPosY())
                 {
-                    if (x > human.getPosX())
+                    if (x > Human.getPosX())
                     {
                         if (!game[y][x - 1].equals("G") && !game[y][x - 1].equals("T") && x != 0)
                         {
@@ -1072,9 +966,9 @@ public class Project_6_v2{
                         }
                     }
                 }
-                else if (x == human.getPosX())
+                else if (x == Human.getPosX())
                 {
-                    if (y > human.getPosY())
+                    if (y > Human.getPosY())
                     {
                         if (!game[y - 1][x].equals("G") && !game[y - 1][x].equals("T") && y != 0)
                         {
@@ -1104,7 +998,7 @@ public class Project_6_v2{
 
                     if (move == 1)
                     {
-                        if ((gobTempX > human.getPosX()) && gobTempX > 0)
+                        if ((gobTempX > Human.getPosX()) && gobTempX > 0)
                         {
                             if (!game[gob.getPosY()][gob.getPosX() - 1].equals("G") && !game[gob.getPosY()][gob.getPosX() - 1].equals("T"))
                             {
@@ -1113,7 +1007,7 @@ public class Project_6_v2{
                                 game[y][x] = "L";
                             }
                         }
-                        else if ((gobTempX < human.getPosX()) && gobTempX < 9)
+                        else if ((gobTempX < Human.getPosX()) && gobTempX < 9)
                         {
                             if (!game[gob.getPosY()][gob.getPosX() + 1].equals("G") && !game[gob.getPosY()][gob.getPosX() + 1].equals("T"))
                             {
@@ -1125,7 +1019,7 @@ public class Project_6_v2{
                     }
                     else
                     {
-                        if ((gobTempY > human.getPosY()) && gobTempY > 0)
+                        if ((gobTempY > Human.getPosY()) && gobTempY > 0)
                         {
                             if (!game[gob.getPosY() - 1][gob.getPosX()].equals("G") && !game[gob.getPosY() - 1][gob.getPosX()].equals("T"))
                             {
@@ -1134,7 +1028,7 @@ public class Project_6_v2{
                                 game[y][x] = "L";
                             }
                         }
-                        else if ((gobTempY < human.getPosY()) && gobTempY < 9)
+                        else if ((gobTempY < Human.getPosY()) && gobTempY < 9)
                         {
                             if (!game[gob.getPosY() + 1][gob.getPosX()].equals("G") && !game[gob.getPosY() + 1][gob.getPosX()].equals("T"))
                             {
@@ -1145,18 +1039,9 @@ public class Project_6_v2{
                         }
                     }
                 }
-                try
-                {
-                    printBoard();
-                    Thread.sleep(5000);
-                }
-                catch (InterruptedException e)
-                {
-                    System.out.println("\nError in program . . .");
-                    System.exit(-1);
-                }
+                printBoard();
 
-                if ((gob.getPosX() == human.getPosX()) && ((gob.getPosY() == human.getPosY() + 1) || (gob.getPosY() == human.getPosY() - 1)))
+                if ((gob.getPosX() == Human.getPosX()) && ((gob.getPosY() == Human.getPosY() + 1) || (gob.getPosY() == Human.getPosY() - 1)))
                 {
                     int goblin = 0;
                     for (int gobs : goblins.keySet())
@@ -1167,15 +1052,15 @@ public class Project_6_v2{
                             break;
                         }
                     }
-                    gob.attack(human);
-                    if (human.getHealth() <= 0)
+                    gob.attack();
+                    if (Human.getHealth() <= 0)
                     {
-                        game[human.getPosY()][human.getPosX()] = "L";
+                        game[Human.getPosY()][Human.getPosX()] = "L";
                         break;
                     }
                     else if (!humanAttack)
                     {
-                        human.attack(gob);
+                        Human.attack(gob);
                         if (gob.getHealth() <= 0)
                         {
                             game[gob.getPosY()][gob.getPosX()] = "L";
@@ -1185,7 +1070,7 @@ public class Project_6_v2{
                         humanAttack = true;
                     }
                 }
-                else if ((gob.getPosY() == human.getPosY()) && ((gob.getPosX() == human.getPosX() + 1) || (gob.getPosX() == gob.getPosX() - 1)))
+                else if ((gob.getPosY() == Human.getPosY()) && ((gob.getPosX() == Human.getPosX() + 1) || (gob.getPosX() == gob.getPosX() - 1)))
                 {
                     int goblin = 0;
                     for (int gobs : goblins.keySet())
@@ -1196,15 +1081,15 @@ public class Project_6_v2{
                             break;
                         }
                     }
-                    gob.attack(human);
-                    if (human.getHealth() <= 0)
+                    gob.attack();
+                    if (Human.getHealth() <= 0)
                     {
-                        game[human.getPosY()][human.getPosX()] = "L";
+                        game[Human.getPosY()][Human.getPosX()] = "L";
                         break;
                     }
                     else if (!humanAttack)
                     {
-                        human.attack(gob);
+                        Human.attack(gob);
                         if (gob.getHealth() <= 0)
                         {
                             game[gob.getPosY()][gob.getPosX()] = "L";
@@ -1222,16 +1107,7 @@ public class Project_6_v2{
             {
                 goblins.remove(remove);
             }
-            try
-            {
-                printBoard();
-                Thread.sleep(5000);
-            }
-            catch (InterruptedException e)
-            {
-                System.out.println("\nError in program . . .");
-                System.exit(-1);
-            }
+            printBoard();
         }
     }
 
@@ -1250,118 +1126,65 @@ public class Project_6_v2{
                         break;
                     }
                 }
-                if (human.attack(gob))
+                if (Human.attack(gob))
                 {
                     if (gob.getHealth() > 0) {
-                        gob.attack(human);
+                        gob.attack();
                         generateTreasure();
                     } else {
                         if (gob.inventory.containsKey(4))
                         {
-                            human.addWeapon(new Items(4));
+                            Human.addWeapon(new Items(4));
                         }
                         game[gob.getPosY()][gob.getPosX()] = "L";
                         goblins.remove(index);
                         generateTreasure();
-                        try
-                        {
-                            printBoard();
-                            Thread.sleep(5000);
-                        }
-                        catch (InterruptedException e)
-                        {
-                            System.out.println("\nError in program . . .");
-                            System.exit(-1);
-                        }
+                        printBoard();
                     }
+                }
+                else
+                {
+                    break;
                 }
                 break;
             }
         }
     }
 
-    public static void help()
-    {
-        try
-        {
-            System.out.println("\nThis game is a turn based game where the Humans are trying to kill the Goblins,\n" +
-                    "and vice versa. The Humans are represented by the letter H, the Goblins by letter G,\n" +
-                    "and random treasure by the letter T. Keep an eye out for the treasure! \n");
-            Thread.sleep(15000);
-        }
-        catch (InterruptedException e)
-        {
-            System.out.println("\nError in program . . .");
-            System.exit(-1);
-        }
-
-        try
-        {
-            System.out.println("\nYou control the" +
-                    " Human. The Goblins will automatically pursue and attempt to kill the Human when it's their turn, or choose to stay still.\n" +
-                    "A prompt will display when it's your turn to move, and ask what you want to do. From there,\n" +
-                    "you can move or access an inventory of items your character has. Movement is in\n" +
-                    "a north/south/east/west direction. To move, simply type the first letter of the direction\n" +
-                    "you want to move. Your inventory will contain all your items and weapons on hand.\n" +
-                    "You can use the Healing Mushroom whenever you wish, but the other items are restricted for\n" +
-                    "use in combat. \n");
-            Thread.sleep(30000);
-        }
-        catch (InterruptedException e)
-        {
-            System.out.println("\nError in program . . .");
-            System.exit(-1);
-        }
-
-        try
-        {
-            System.out.println("\nCombat in this game is automatically initiated when the Human and a Goblin\n" +
-                    "collide. Each one gets a chance to do damage on each other. The Goblins will do their own attack,\n" +
-                    "but you get to choose what to do in combat. The game will prompt you for what you want to do.\n" +
-                    "You can either directly attack with one of your weapons, use a Healing Mushroom, Bomb, or Potion.\n" +
-                    "Directly attacking will use one of your conventional weapons to strike a blow. However, a weapon\n" +
-                    "in your inventory only increases the maximum potential damage your attack could do. The Bomb acts\n" +
-                    "the same, except it has the greatest chance of killing a Goblin in a single turn. But, you can only\n" +
-                    "use a Bomb if it is in your inventory. Don't worry, Goblins will drop their Bombs if they are killed,\n" +
-                    "and have any in their inventory. Healing Mushrooms are used to add 25 health points, or top off your\n" +
-                    "health to 100. You can also only use them if one is in your inventory. Finally, the Potion is used to\n" +
-                    "take 25 health points of the Goblin's health and add to the Human's health. It can even be used to \n" +
-                    "increase the Human's maximum hit points. This item can also only be used if it is in the inventory.\n" +
-                    "Be careful with your special items, because only one of each item can be stored at a time! You can\n" +
-                    "relax knowing that Goblins cannot carry Healing Mushrooms or Potions, and they are limited to using\n" +
-                    "a sword, and have one bomb each. \n");
-            Thread.sleep(35000);
-        }
-        catch (InterruptedException e)
-        {
-            System.out.println("\nError in program . . .");
-            System.exit(-1);
-        }
-
-        try
-        {
-            System.out.println("\nThe game is won by killing all the Goblins, and the game is lost\n" +
-                    "when the Human is killed. Good luck, and thanks for playing the game!\n");
-            Thread.sleep(15000);
-        }
-        catch (InterruptedException e)
-        {
-            System.out.println("\nError in program . . .");
-            System.exit(-1);
-        }
-    }
-
     public static void printBoard()
     {
-        System.out.println("\n");
-        for (int i = 0; i < game.length; i++)
+        for (int i = 0; i < 10; i++)
         {
-            for (int j = 0; j < game[i].length; j++)
+            for (int j = 0; j < 10; j++)
             {
-                System.out.print(game[i][j] + "   ");
+                labels[i][j].setText(game[i][j]);
+                String labelType = game[i][j];
+                switch (labelType){
+                    case "H":
+                        labels[i][j].setBorder(blue);
+                        break;
+                    case "G":
+                        labels[i][j].setBorder(red);
+                        break;
+                    case "T":
+                        labels[i][j].setBorder(orange);
+                        break;
+                    case "L":
+                        labels[i][j].setBorder(green);
+                        break;
+                }
             }
-            System.out.print("\n");
         }
+
+        playerStats[0].setText((Human.getPosX() + 1) + ", " + (Human.getPosY() + 1));
+        playerStats[1].setText(String.valueOf(Human.getHealth()));
+        playerStats[2].setText(String.valueOf(Human.getPower()));
+        StringBuilder temp = new StringBuilder();
+        for (int wep : Human.inventory.keySet())
+        {
+            temp.append(Human.inventory.get(wep).getWeapon()).append("     ");
+        }
+        playerStats[3].setText(temp.toString());
     }
 
     public static void generateTreasure()
@@ -1380,89 +1203,43 @@ public class Project_6_v2{
 
     public static void playGame()
     {
-        boolean done = false, finished = false;
-        try
-        {
-            System.out.println("\nWelcome to Humans vs. Goblins");
-            Thread.sleep(5000);
-        }
-        catch (InterruptedException e)
-        {
-            System.out.println("\nError in program . . .");
-            System.exit(-1);
-        }
-        help();
-        while(!finished)
-        {
-            initialSetup();
-            playerStats();
-            printBoard();
-            while (!done)
-            {
-                if (!goblins.isEmpty() && human.getHealth() > 0) {
-                    try
-                    {
-                        System.out.println("\nGoblins turn!");
-                        Thread.sleep(5000);
-                    }
-                    catch (InterruptedException e)
-                    {
-                        System.out.println("\nError in program . . .");
-                        System.exit(-1);
-                    }
-                    goblinTurn();
-                    if (!goblins.isEmpty() && human.getHealth() > 0) {
-                        playerTurn();
+        boolean done = false;
+        initialSetup();
 
-                        if (goblins.isEmpty()) {
-                            System.out.println("Congratulations! You beat the game!");
-                            done = true;
-                        } else if (human.getHealth() == 0) {
-                            System.out.println("You died! Sorry, you lost!");
-                            done = true;
-                        }
-                    } else if (goblins.isEmpty()) {
-                        System.out.println("Congratulations! You beat the game!");
+        while (!done)
+        {
+            if (!goblins.isEmpty() && Human.getHealth() > 0) {
+                goblinTurn();
+                if (!goblins.isEmpty() && Human.getHealth() > 0) {
+                    playerTurn();
+
+                    if (goblins.isEmpty()) {
+                        JOptionPane.showMessageDialog(new JFrame(), "Congratulations! You beat the game!");
                         done = true;
-                    } else if (human.getHealth() <= 0) {
-                        System.out.println("You died! Sorry, you lost!");
+                    } else if (Human.getHealth() == 0) {
+                        JOptionPane.showMessageDialog(new JFrame(), "You died! Sorry, you lost!");
                         done = true;
                     }
+                } else if (goblins.isEmpty()) {
+                    JOptionPane.showMessageDialog(new JFrame(), "Congratulations! You beat the game!");
+                    done = true;
+                } else if (Human.getHealth() <= 0) {
+                    JOptionPane.showMessageDialog(new JFrame(), "You died! Sorry, you lost!");
+                    done = true;
                 }
             }
-            System.out.println("Do you want to play again (y/n): ");
-            String input = "";
-            try
-            {
-                input = scan2.nextLine();
-            }
-            catch (Exception e)
-            {
-                System.out.println("Sorry, that was invalid input! Please try again!");
-            }
-            switch (input)
-            {
-                case "Y":
-                    System.out.println("Ok, I'll reset the game.\n");
-                    done = false;
-                    break;
-                case "y":
-                    System.out.println("I'll reset the game.\n");
-                    done = false;
-                    break;
-                case "N":
-                    System.out.println("Ok, good-bye for now.\n");
-                    finished = true;
-                    break;
-                case "n":
-                    System.out.println("Exiting the game.\n");
-                    finished = true;
-                    break;
-                default:
-                    System.out.println("I didn't understand. Exiting by default. . .");
-                    finished = true;
-                    break;
-            }
+        }
+        int finish = JOptionPane.showOptionDialog(new JFrame(), "Do you want to play again?", "Quit Game",
+                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, new Object[] {"Yes", "No"},
+                JOptionPane.YES_OPTION);
+
+        if (finish == JOptionPane.YES_OPTION)
+        {
+            playGame();
+        }
+        else if (finish == JOptionPane.NO_OPTION)
+        {
+            System.exit(-1);
         }
     }
 

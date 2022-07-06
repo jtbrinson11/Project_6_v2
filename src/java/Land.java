@@ -6,7 +6,7 @@ public class Land{
     {
         holder = input;
     }
-
+    
     public String getLand()
     {
         return holder;
